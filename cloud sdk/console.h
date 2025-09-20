@@ -1,12 +1,12 @@
 #pragma once
+
 #include <sstream>
-#include "xor.h"
+
 #include <iostream>
 #include <Windows.h>
-#include "cfg.h"
-#include "resolve.h"
 
-std::string logo = _(R"(
+
+std::string logo = R"(
  ________   ___        ________   ___  ___   ________     
 |\   ____\ |\  \      |\   __  \ |\  \|\  \ |\   ___ \    
 \ \  \___| \ \  \     \ \  \|\  \\ \  \\\  \\ \  \_|\ \   
@@ -15,7 +15,7 @@ std::string logo = _(R"(
    \ \_______\\ \_______\\ \_______\\ \_______\\ \_______\
     \|_______| \|_______| \|_______| \|_______| \|_______|
                                      
-)");
+)";
 
 class c_console {
 private:
@@ -84,7 +84,7 @@ private:
 		std::string line;
 
 		while (std::getline(lines, line)) {
-			faded << _("\033[38;2;0;0;") << blue << _("m") << line << _("\033[0m\n"); // god im sorry for whoever is reading this :fire:
+			faded << "\033[38;2;0;0;" << blue << ("m") << line << ("\033[0m\n"); // god im sorry for whoever is reading this :fire:
 			blue -= 15;
 			if (blue < 0) {
 				blue = 0;
@@ -101,11 +101,25 @@ private:
 public:
 	__forceinline void init() {
 
-#if _WINDLL 
+#if _WINDLL  //todo: only alloc when theres not already a console open
 		// alloc console work
-		AllocConsole();
-		freopen("conout$", "w", stdout);
-		freopen("conout$", "r", stdin);
+		//if (!GetConsoleWindow()) { // ?
+			AllocConsole();
+			FILE* fp;
+			if (freopen_s(&fp, "CONOUT$", "w", stdout) == 0) {
+				setvbuf(stdout, nullptr, _IONBF, 0); // no buffering :3
+			}
+
+			// Redirect STDIN
+			if (freopen_s(&fp, "CONIN$", "r", stdin) == 0) {
+				setvbuf(stdin, nullptr, _IONBF, 0);
+			}
+
+			// Redirect STDERR
+			if (freopen_s(&fp, "CONOUT$", "w", stderr) == 0) {
+				setvbuf(stderr, nullptr, _IONBF, 0);
+			}
+		// }
 #endif
 		hConsole = GetStdHandle(STD_OUTPUT_HANDLE); // used in legit modules so no need to spoof (probably?)
 
@@ -156,12 +170,13 @@ public:
 #if bShouldResolve
 		// no resolve for SetConsoleMode
 		SetConsoleMode(hConsole, dwMode);
-#else
-		SetConsoleMode(hConsole, dwMode);
 #endif
+		SetConsoleMode(hConsole, dwMode); // :/ didnt work cause aids
+
 
 #if !_WINDLL
-		set_highest_priority(); // bad for internals but this is very useful externally
+		set_highest_priority(); // bad for internals but this is very useful externally 
+		// i went from like 40ish fps in an external to 2000+ with this
 #endif
 		set_transparency(220);
 
@@ -173,7 +188,7 @@ public:
 			pSetConsoleTitleA(title.c_str());
 		}
 		else {
-			SetConsoleTitleA(title.c_str()); // fallback to original func 
+			SetConsoleTitleA(title.c_str()); // fallback to original func due to some processes not fully resolving :/
 		}
 #else
 		SetConsoleTitleA(title.c_str());
