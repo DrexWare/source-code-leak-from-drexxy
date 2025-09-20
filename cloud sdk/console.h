@@ -5,8 +5,9 @@
 #include <iostream>
 #include <Windows.h>
 
-
-std::string logo = R"(
+#include "cfg.h"
+#include "resolve.h"
+inline std::string logo = R"(
  ________   ___        ________   ___  ___   ________     
 |\   ____\ |\  \      |\   __  \ |\  \|\  \ |\   ___ \    
 \ \  \___| \ \  \     \ \  \|\  \\ \  \\\  \\ \  \_|\ \   
@@ -166,12 +167,8 @@ public:
 		GetConsoleMode(hConsole, &dwMode);
 #endif
 		dwMode |= 0x0004; // enable ANSI escape codes
-
-#if bShouldResolve
-		// no resolve for SetConsoleMode
-		SetConsoleMode(hConsole, dwMode);
-#endif
 		SetConsoleMode(hConsole, dwMode); // :/ didnt work cause aids
+		
 
 
 #if !_WINDLL
@@ -199,7 +196,8 @@ public:
 		HWND consoleWindow = GetConsoleWindow();
 		SetLayeredWindowAttributes(consoleWindow, 0, opacity, LWA_ALPHA);
 	}
-	__forceinline void clear() {
+
+	__forceinline void clear() { // todo: universal mode but rn this is fine :3
 
 		std::cout << "\033[2J\033[H" << std::flush; // ascii clear screen
 		fade(logo);
